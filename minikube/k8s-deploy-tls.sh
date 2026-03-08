@@ -17,6 +17,27 @@
 
 set -e
 
+wait_for_deployment() {
+    local namespace=$1
+    local deployment_name=$2
+
+    until kubectl -n "$namespace" get deployment "$deployment_name" >/dev/null 2>&1; do
+        sleep 2
+    done
+
+    kubectl -n "$namespace" rollout status "deployment/$deployment_name" --timeout=300s
+}
+
+ensure_cert_manager() {
+    if ! kubectl get crd clusterissuers.cert-manager.io >/dev/null 2>&1; then
+        kubectl apply -f "${TB_CERT_MANAGER_MANIFEST_URL}"
+    fi
+
+    wait_for_deployment cert-manager cert-manager
+    wait_for_deployment cert-manager cert-manager-webhook
+    wait_for_deployment cert-manager cert-manager-cainjector
+}
+
 render_manifest() {
     local source_file=$1
     local rendered_file
@@ -51,16 +72,14 @@ apply_rendered_manifest() {
 source .env
 : "${TB_PUBLIC_HOST:=things.iot-platform.io.vn}"
 : "${TB_INGRESS_CLASS_NAME:=nginx}"
+: "${TB_CERT_MANAGER_MANIFEST_URL:=https://github.com/cert-manager/cert-manager/releases/download/v1.19.2/cert-manager.yaml}"
 : "${TB_TLS_SECRET_NAME:=tb-ingress-tls}"
 : "${TB_TLS_CLUSTER_ISSUER:=letsencrypt-prod}"
 : "${TB_TLS_ACME_EMAIL:=gpt.htv@gmail.com}"
 : "${TB_TLS_ACME_SERVER:=https://acme-v02.api.letsencrypt.org/directory}"
 : "${TB_SSL_REDIRECT:=true}"
 
-if ! kubectl get crd clusterissuers.cert-manager.io >/dev/null 2>&1; then
-    echo "cert-manager is not installed. Install cert-manager before deploying TLS resources." >&2
-    exit 1
-fi
+ensure_cert_manager
 
 kubectl apply -f tb-namespace.yml || echo
 apply_rendered_manifest cluster-issuer.yml
