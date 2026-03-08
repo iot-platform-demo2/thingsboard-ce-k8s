@@ -17,7 +17,39 @@
 
 set -e
 
+render_manifest() {
+    local source_file=$1
+    local rendered_file
+
+    rendered_file=$(mktemp)
+    sed \
+        -e "s|__TB_PUBLIC_HOST__|${TB_PUBLIC_HOST}|g" \
+        -e "s|__TB_INGRESS_CLASS_NAME__|${TB_INGRESS_CLASS_NAME}|g" \
+        -e "s|__TB_MQTT_SERVICE_TYPE__|${TB_MQTT_SERVICE_TYPE}|g" \
+        -e "s|__TB_COAP_SERVICE_TYPE__|${TB_COAP_SERVICE_TYPE}|g" \
+        "$source_file" > "$rendered_file"
+
+    printf '%s\n' "$rendered_file"
+}
+
+apply_rendered_manifest() {
+    local source_file=$1
+    local rendered_file
+
+    rendered_file=$(render_manifest "$source_file")
+    if ! kubectl apply -f "$rendered_file"; then
+        rm -f "$rendered_file"
+        return 1
+    fi
+
+    rm -f "$rendered_file"
+}
+
 source .env
+: "${TB_PUBLIC_HOST:=things.iot-platform.io.vn}"
+: "${TB_INGRESS_CLASS_NAME:=nginx}"
+: "${TB_MQTT_SERVICE_TYPE:=LoadBalancer}"
+: "${TB_COAP_SERVICE_TYPE:=LoadBalancer}"
 kubectl apply -f tb-namespace.yml || echo
 
 kubectl config set-context $(kubectl config current-context) --namespace=thingsboard
@@ -27,8 +59,7 @@ kubectl apply -f tb-cache-configmap.yml
 kubectl apply -f tb-kafka-configmap.yml
 kubectl apply -f tb-node-configmap.yml
 kubectl apply -f tb-transport-configmap.yml
-kubectl apply -f thingsboard.yml
+apply_rendered_manifest thingsboard.yml
 kubectl apply -f tb-node.yml
 
-kubectl apply -f routes.yml
-
+apply_rendered_manifest routes.yml

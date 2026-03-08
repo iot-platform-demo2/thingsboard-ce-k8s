@@ -137,7 +137,7 @@ metadata:
   name: tb-mqtt-transport
   namespace: thingsboard
 spec:
-  type: ClusterIP
+  type: __TB_MQTT_SERVICE_TYPE__
   selector:
     app: tb-mqtt-transport
   ports:
@@ -297,7 +297,7 @@ metadata:
   name: tb-coap-transport
   namespace: thingsboard
 spec:
-  type: LoadBalancer
+  type: __TB_COAP_SERVICE_TYPE__
   selector:
     app: tb-coap-transport
   ports:

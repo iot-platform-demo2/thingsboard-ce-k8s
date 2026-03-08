@@ -20,12 +20,16 @@ metadata:
   name: tb-ingress
   namespace: thingsboard
   annotations:
+    kubernetes.io/ingress.class: __TB_INGRESS_CLASS_NAME__
     nginx.ingress.kubernetes.io/use-regex: "true"
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
+  ingressClassName: __TB_INGRESS_CLASS_NAME__
   rules:
-    - http:
+    - host: __TB_PUBLIC_HOST__
+      http:
         paths:
           - path: /api/v1/.*
             pathType: ImplementationSpecific
