@@ -21,12 +21,18 @@ metadata:
   namespace: thingsboard
   annotations:
     kubernetes.io/ingress.class: __TB_INGRESS_CLASS_NAME__
+    cert-manager.io/cluster-issuer: __TB_TLS_CLUSTER_ISSUER__
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/ssl-redirect: "__TB_SSL_REDIRECT__"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "__TB_SSL_REDIRECT__"
 spec:
   ingressClassName: __TB_INGRESS_CLASS_NAME__
+  tls:
+    - hosts:
+        - __TB_PUBLIC_HOST__
+      secretName: __TB_TLS_SECRET_NAME__
   rules:
     - host: __TB_PUBLIC_HOST__
       http:

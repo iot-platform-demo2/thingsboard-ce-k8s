@@ -27,9 +27,9 @@ render_manifest() {
         -e "s|__TB_INGRESS_CLASS_NAME__|${TB_INGRESS_CLASS_NAME}|g" \
         -e "s|__TB_TLS_SECRET_NAME__|${TB_TLS_SECRET_NAME}|g" \
         -e "s|__TB_TLS_CLUSTER_ISSUER__|${TB_TLS_CLUSTER_ISSUER}|g" \
+        -e "s|__TB_TLS_ACME_EMAIL__|${TB_TLS_ACME_EMAIL}|g" \
+        -e "s|__TB_TLS_ACME_SERVER__|${TB_TLS_ACME_SERVER}|g" \
         -e "s|__TB_SSL_REDIRECT__|${TB_SSL_REDIRECT}|g" \
-        -e "s|__TB_MQTT_SERVICE_TYPE__|${TB_MQTT_SERVICE_TYPE}|g" \
-        -e "s|__TB_COAP_SERVICE_TYPE__|${TB_COAP_SERVICE_TYPE}|g" \
         "$source_file" > "$rendered_file"
 
     printf '%s\n' "$rendered_file"
@@ -53,19 +53,17 @@ source .env
 : "${TB_INGRESS_CLASS_NAME:=nginx}"
 : "${TB_TLS_SECRET_NAME:=tb-ingress-tls}"
 : "${TB_TLS_CLUSTER_ISSUER:=letsencrypt-prod}"
+: "${TB_TLS_ACME_EMAIL:=gpt.htv@gmail.com}"
+: "${TB_TLS_ACME_SERVER:=https://acme-v02.api.letsencrypt.org/directory}"
 : "${TB_SSL_REDIRECT:=true}"
-: "${TB_MQTT_SERVICE_TYPE:=LoadBalancer}"
-: "${TB_COAP_SERVICE_TYPE:=LoadBalancer}"
+
+if ! kubectl get crd clusterissuers.cert-manager.io >/dev/null 2>&1; then
+    echo "cert-manager is not installed. Install cert-manager before deploying TLS resources." >&2
+    exit 1
+fi
+
 kubectl apply -f tb-namespace.yml || echo
+apply_rendered_manifest cluster-issuer.yml
 
 kubectl config set-context $(kubectl config current-context) --namespace=thingsboard
-
-kubectl apply -f $DATABASE/tb-node-db-configmap.yml
-kubectl apply -f tb-cache-configmap.yml
-kubectl apply -f tb-kafka-configmap.yml
-kubectl apply -f tb-node-configmap.yml
-kubectl apply -f tb-transport-configmap.yml
-apply_rendered_manifest thingsboard.yml
-kubectl apply -f tb-node.yml
-
 apply_rendered_manifest routes.yml
