@@ -70,7 +70,7 @@ apply_rendered_manifest() {
 }
 
 source .env
-: "${TB_PUBLIC_HOST:=things.iot-platform.io.vn}"
+: "${TB_PUBLIC_HOST:=newgen.iot-platform.io.vn}"
 : "${TB_INGRESS_CLASS_NAME:=nginx}"
 : "${TB_CERT_MANAGER_MANIFEST_URL:=https://github.com/cert-manager/cert-manager/releases/download/v1.19.2/cert-manager.yaml}"
 : "${TB_TLS_SECRET_NAME:=tb-ingress-tls}"

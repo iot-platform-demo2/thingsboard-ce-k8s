@@ -49,7 +49,7 @@ apply_rendered_manifest() {
 }
 
 source .env
-: "${TB_PUBLIC_HOST:=things.iot-platform.io.vn}"
+: "${TB_PUBLIC_HOST:=newgen.iot-platform.io.vn}"
 : "${TB_INGRESS_CLASS_NAME:=nginx}"
 : "${TB_TLS_SECRET_NAME:=tb-ingress-tls}"
 : "${TB_TLS_CLUSTER_ISSUER:=letsencrypt-prod}"
